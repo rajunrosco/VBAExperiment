@@ -101,13 +101,14 @@ Sub ProtectLocDirectSheet()
         Selection.Locked = True
         ActiveSheet.protect , Contents:=True, AllowSorting:=True, AllowFiltering:=True, AllowFormattingCells:=True, AllowFormattingRows:=True, AllowFormattingColumns:=True
     End If
-
+    Cells(1, 1).Select
 End Sub
 
 Sub UnProtectLocDirectSheet()
     Columns("A:D").Select
     ActiveSheet.unprotect
     Selection.Locked = False
+    Cells(1, 1).Select
 End Sub
 
 Sub RefreshLocDirectData()
