@@ -18,8 +18,8 @@ Sub SaveCodeModules()
     With ThisWorkbook.VBProject
         For i = .VBComponents.Count To 1 Step -1
             name = .VBComponents(i).CodeModule.name
-            'Only save out the LocDirectModule VBA script for now
-            If name = "LocDirectModule" Then
+            'Only save out the LocDirectModule and UserPassform VBA script for now
+            If name = "LocDirectModule" Or name = "UserPassForm" Then
                 .VBComponents(i).Export Application.ThisWorkbook.Path & "\\" & name & ".vba"
             End If
         Next i
@@ -45,9 +45,21 @@ End With
 
 End Sub
 
-Sub LocDirectGetStrings()
-    UserName = Environ("LOCDIRECT_USER")
-    Password = Environ("LOCDIRECT_PASSWORD")
+Function LocDirectGetStrings() As Boolean
+
+    'Preferred method to get User Environment Variables
+    Set objUserEnvVars = CreateObject("WScript.Shell").Environment("User")
+    UserName = objUserEnvVars.Item("LOCDIRECT_USER")
+    Password = objUserEnvVars.Item("LOCDIRECT_PASSWORD")
+    
+    If UserName = "" Or Password = "" Then
+        If VerifyUser() = False Then
+             Application.StatusBar = "LocDirect GetStrings authentication failed..."
+             LocDirectGetStrings = False
+            Exit Function
+        End If
+    End If
+
 
     Dim AuthBody As String
     Dim response As String
@@ -100,6 +112,13 @@ Sub LocDirectGetStrings()
                 LocDirectDict.Add StringIDNode.Text, TextNode.Text
             Next StringNode
         End If
+    Else
+        Application.StatusBar = "LocDirect authentication error..."
+        'May have been cause by bad authentication.  Reset user env vars.
+        objUserEnvVars.Item("LOCDIRECT_USER") = ""
+        objUserEnvVars.Item("LOCDIRECT_PASSWORD") = ""
+        LocDirectGetStrings = False
+        Exit Function
     End If
     
     Application.StatusBar = ""
@@ -107,14 +126,16 @@ Sub LocDirectGetStrings()
     'For Each currentkey In LocDirectDict.Keys
     '    Debug.Print currentkey & " -> " & LocDirectDict(currentkey)
     'Next currentkey
-    
-End Sub
+    LocDirectGetStrings = True
+End Function
 
 Sub ProtectLocDirectSheet()
     If Not ActiveSheet.ProtectContents Then
         Columns("E:G").Select
         Selection.Locked = False
         Columns("A:D").Select
+        Selection.Locked = True
+        Rows(1).Select
         Selection.Locked = True
         ActiveSheet.protect , Contents:=True, AllowSorting:=True, AllowFiltering:=True, AllowFormattingCells:=True, AllowFormattingRows:=True, AllowFormattingColumns:=True
     End If
@@ -146,7 +167,14 @@ Sub RefreshLocDirectData()
     
     UnProtectLocDirectSheet
     
-    LocDirectGetStrings
+    If LocDirectGetStrings() = False Then
+        ProtectLocDirectSheet
+        Exit Sub
+    End If
+    
+    
+    Application.StatusBar = "Calculating Diffs..."
+    
     LastRow = Range("B" & Rows.Count).End(xlUp).row
     
     Set DiffRange = Range("A2:A" & LastRow)
@@ -228,7 +256,10 @@ Sub UpdateLocDirect()
     'For Each UString In UpdateStrings
     '    Debug.Print UString
     'Next UString
-    
+    If VerifyUser() = False Then
+        MsgBox "Cancel or error", vbOKOnly
+        Exit Sub
+    End If
     
 End Sub
 
@@ -270,3 +301,19 @@ Sub TestSort()
     SortRange.Sort Range("B5483:B5486")
 
 End Sub
+
+Function VerifyUser() As Boolean
+
+    UserPassForm.Show
+    
+    'Preferred method to get User Environment Variables
+    Set objUserEnvVars = CreateObject("WScript.Shell").Environment("User")
+    UserName = objUserEnvVars.Item("LOCDIRECT_USER")
+    Password = objUserEnvVars.Item("LOCDIRECT_Password")
+    
+    If UserName = "" Or Password = "" Or UserPassForm.bCancelled = True Then
+        VerifyUser = False
+        Exit Function
+    End If
+    VerifyUser = True
+End Function
