@@ -46,8 +46,8 @@ End With
 End Sub
 
 Sub LocDirectGetStrings()
-    UserName = "SLC_SVC_BUILD"
-    Password = "LocDirectSLC"
+    UserName = Environ("LOCDIRECT_USER")
+    Password = Environ("LOCDIRECT_PASSWORD")
 
     Dim AuthBody As String
     Dim response As String
