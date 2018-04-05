@@ -17,14 +17,31 @@ Sub SaveCodeModules()
     
     With ThisWorkbook.VBProject
         For i = .VBComponents.Count To 1 Step -1
-            If .VBComponents(i).Type <> vbext_ct_Document Then
-                If .VBComponents(i).CodeModule.CountOfLines > 0 Then
-                    name = .VBComponents(i).CodeModule.name
-                    .VBComponents(i).Export Application.ThisWorkbook.Path & "\\" & name & ".vba"
-                End If
+            name = .VBComponents(i).CodeModule.name
+            'Only save out the LocDirectModule VBA script for now
+            If name = "LocDirectModule" Then
+                .VBComponents(i).Export Application.ThisWorkbook.Path & "\\" & name & ".vba"
             End If
         Next i
     End With
+
+End Sub
+
+Sub ImportCodeModules()
+Dim i As Integer
+Dim ModuleName As String
+
+With ThisWorkbook.VBProject
+    For i = .VBComponents.Count To 1 Step -1
+        ModuleName = .VBComponents(i).CodeModule.name
+        If ModuleName = "LocDirecdModule" Then
+            'Rename module with _OLD suffix so when delete happens, it will not interfere with the currently open file...
+            .VBComponents(ModuleName).name = ModuleName & "_OLD"
+            .VBComponents.Remove .VBComponents(ModuleName & "_OLD")
+            .VBComponents.Import Application.ThisWorkbook.Path & "\\" & ModuleName & ".vba"
+        End If
+    Next i
+End With
 
 End Sub
 
