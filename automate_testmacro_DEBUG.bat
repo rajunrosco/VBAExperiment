@@ -1,0 +1,1 @@
+cscript.exe automate_testmacro.vbs //X
