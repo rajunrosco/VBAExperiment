@@ -13,6 +13,9 @@ ObjWB.MyMacro
 
 ObjExcel.Cells(3,3).Value= "Hello from VBS"
 
+ObjExcel.Cells(10,"M").Value = 666
+
+'ObjWB.RefreshAll
 
 ObjWB.Save
 
